@@ -106,30 +106,90 @@ INNER JOIN almacen.dbo.empleados j ON e.idjefe = j.idempleado
 WHERE e.idoficina <> j.idoficina;
 
 /*9. En el punto anterior no salen los que no tienen oficina, cambiar la sentencia para que aparezcan.*/
+SELECT 
+    e.idempleado AS ID_Empleado,
+    e.nombre AS Nombre_Empleado,
+    e.idoficina AS Oficina_Empleado,
+    j.idempleado AS ID_Jefe,
+    j.nombre AS Nombre_Jefe,
+    j.idoficina AS Oficina_Jefe
+FROM almacen.dbo.empleados e
+LEFT JOIN almacen.dbo.empleados j ON e.idjefe = j.idempleado
+WHERE (e.idoficina <> j.idoficina)
+   OR e.idoficina IS NULL
+   OR j.idoficina IS NULL;
+
 
 
 /*10. Lo mismo que la anterior, pero queremos que aparezca también la ciudad de las oficinas (tanto del
 empleado como de su jefe).*/
+SELECT 
+    e.idempleado AS ID_Empleado,
+    e.nombre AS Nombre_Empleado,
+    e.idoficina AS Oficina_Empleado,
+    o.ciudad AS Ciudad_Oficinas,
+    j.idempleado AS ID_Jefe,
+    j.nombre AS Nombre_Jefe,
+    j.idoficina AS Oficina_Jefe
+FROM almacen.dbo.empleados e
+LEFT JOIN almacen.dbo.empleados j ON e.idjefe = j.idempleado
+LEFT JOIN almacen.dbo.oficina o ON o.idoficina = e.idoficina
+WHERE (e.idoficina <> j.idoficina)
+   OR e.idoficina IS NULL
+   OR j.idoficina IS NULL;
 
 
 /*11. Total de pedidos por cliente
 Listar cada cliente mostrando su código, nombre y la cantidad de pedidos realizados. Ordenar el
 resultado de mayor a menor cantidad de pedidos*/
 
+SELECT
+    c.idcliente AS Codigo_Cliente,
+    c.nombre AS Nombre_Cliente,
+    COUNT(p.nopedido) AS Cantidad_Pedidos
+FROM almacen.dbo.cliente c
+INNER JOIN almacen.dbo.pedidos p ON c.idcliente = p.idcliente
+GROUP BY c.idcliente, c.nombre
+ORDER BY Cantidad_Pedidos DESC;
+
+
 
 /*12. Importe total vendido por empleado
 Mostrar el código y nombre de cada empleado junto con el importe total de los pedidos gestionados
 por dicho empleado.*/
-
+SELECT
+    e.idempleado AS Codigo_Empleado,
+    e.nombre AS Nombre_Empleado,
+    SUM(p.importe) AS Importe_Total
+FROM almacen.dbo.empleados e
+INNER JOIN almacen.dbo.pedidos p ON p.idempleado = e.idempleado
+GROUP BY e.idempleado, e.nombre
+ORDER BY Importe_Total DESC;
 
 /*13. Cantidad de productos vendidos
 Mostrar cada producto indicando su código, descripción y la cantidad total vendida en todos los
 pedidos.*/
-
+SELECT
+    p.idproducto AS Codigo_Producto,
+    p.descripcion AS Descripcion,
+    SUM(dp.cantidad) AS Cantidad_Total_Vendida
+FROM almacen.dbo.productos p
+INNER JOIN almacen.dbo.detpedido dp ON dp.idproducto = p.idproducto
+GROUP BY p.idproducto, p.descripcion
+ORDER BY Cantidad_Total_Vendida DESC;
 
 /*14. Clientes con mayor límite de crédito
 Listar los clientes cuyo límite de crédito sea superior al promedio de crédito de todos los clientes.*/
-
+SELECT
+    c.idcliente AS Codigo_Cliente,
+    c.nombre AS Nombre_Cliente,
+    c.limite_credito AS Limite_Credito
+FROM almacen.dbo.cliente c
+WHERE c.limite_credito > (
+    SELECT AVG(limite_credito) 
+    FROM almacen.dbo.cliente
+)
+ORDER BY c.limite_credito DESC;
 
 /*15. Resumen de ventas por oficina
 Mostrar el código de oficina, descripción, ciudad y el importe total de los pedidos gestionados por
@@ -142,5 +202,17 @@ Tablas involucradas:
 • INNER JOIN
 • SUM()
 • GROUP BY
-• Consultas multitablas
+• Consultas multitablas. pregunta 15
 */
+
+SELECT 
+    o.idoficina AS Codigo_Oficina,
+    o.descripcion AS Descripcion_Oficina,
+    o.ciudad AS Ciudad,
+    SUM(p.importe) AS Importe_Total
+FROM almacen.dbo.oficina o
+INNER JOIN almacen.dbo.empleados e ON o.idoficina = e.idoficina
+INNER JOIN almacen.dbo.pedidos p ON e.idempleado = p.idempleado
+GROUP BY o.idoficina, o.descripcion, o.ciudad
+ORDER BY Importe_Total DESC;
+
